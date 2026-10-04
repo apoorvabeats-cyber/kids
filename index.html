@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FunLearn — Kids Learning Simulator</title>
+  <meta name="description" content="Tap a card to hear alphabets, Hindi varnmala, numbers, animals, rhymes, and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Noto+Sans+Devanagari:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3eee4;
+      --surface: #fffaf2;
+      --fg: #2c2416;
+      --muted: #7a7062;
+      --primary: #d4533f;
+      --primary-fg: #fffaf2;
+      --teal: #21867c;
+      --border: #e4d9c8;
+      --plate: #f7f0e4;
+      --display: "Baloo 2", "Nunito", sans-serif;
+      --sans: "Nunito", system-ui, sans-serif;
+      --deva: "Noto Sans Devanagari", "Nunito", sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      min-height: 100dvh;
+    }
+    button { font-family: inherit; cursor: pointer; }
+    #sidebar {
+      width: 248px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 18px 12px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .brand { display: flex; gap: 10px; align-items: center; padding: 4px 8px 16px; }
+    .mark {
+      width: 36px; height: 36px; border-radius: 8px; background: var(--primary);
+      color: var(--primary-fg); display: grid; place-items: center;
+      font-family: var(--display); font-size: 1.15rem;
+    }
+    .brand h1 { font-family: var(--display); font-size: 1.35rem; line-height: 1; }
+    .brand p { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+    .nav-btn {
+      width: 100%; text-align: left; background: transparent; border: 0;
+      padding: 10px 12px; border-radius: 10px; font-weight: 700; font-size: 0.92rem;
+      margin-bottom: 4px; color: var(--fg);
+    }
+    .nav-btn.active, .nav-btn:hover { background: var(--primary); color: var(--primary-fg); }
+    #app { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 28px; border-bottom: 1px solid var(--border); background: var(--surface);
+    }
+    #menu { display: none; width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); font-weight: 800; }
+    header .hint { color: var(--muted); font-size: 0.9rem; }
+    #stop {
+      display: none; background: var(--fg); color: var(--surface); border: 0;
+      padding: 8px 14px; border-radius: 10px; font-weight: 700;
+    }
+    main { flex: 1; overflow-y: auto; padding: 28px 36px 80px; }
+    h2 { font-family: var(--display); font-size: 2.1rem; }
+    .sub { color: var(--muted); margin: 6px 0 18px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+    .action {
+      border: 0; background: var(--primary); color: var(--primary-fg);
+      padding: 10px 16px; border-radius: 10px; font-weight: 700;
+    }
+    .action.teal { background: var(--teal); }
+    .action.ghost { background: var(--surface); color: var(--fg); border: 1px solid var(--border); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+    .grid.tight { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+    .card, .wide, .home-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 14px; text-align: center; box-shadow: 0 8px 24px rgba(44,36,22,.06);
+    }
+    .card:hover, .wide:hover, .home-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .card { min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; }
+    .glyph { font-family: var(--display); font-size: 2.2rem; color: var(--primary); line-height: 1; }
+    .glyph.hi { font-family: var(--deva); }
+    .label { font-weight: 700; }
+    .sub-label { font-size: 0.8rem; color: var(--muted); }
+    .check { position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; border-radius: 50%; background: var(--teal); color: #fff; font-size: 11px; display: none; align-items: center; justify-content: center; }
+    .heard .check { display: flex; }
+    .list { display: flex; flex-direction: column; gap: 10px; max-width: 720px; }
+    .wide { display: flex; align-items: center; justify-content: space-between; text-align: left; padding: 14px 18px; font-weight: 700; }
+    .play { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: var(--primary-fg); display: grid; place-items: center; }
+    .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+    .home-card { min-height: 140px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; }
+    .home-card b { font-family: var(--display); font-size: 1.2rem; }
+    .kicker { color: var(--teal); font-size: 0.8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .display { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; max-width: 720px; }
+    .display p { white-space: pre-line; font-size: 1.15rem; line-height: 1.7; margin: 16px 0; }
+    .hi-text { font-family: var(--deva); }
+    .group { margin: 18px 0 8px; font-family: var(--display); color: var(--teal); }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(44,36,22,.3); z-index: 20; }
+    .overlay.open { display: block; }
+    @media (max-width: 800px) {
+      #sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; transform: translateX(-110%); transition: transform .2s; }
+      #sidebar.open { transform: none; }
+      #menu { display: grid; place-items: center; }
+      main { padding: 20px 16px 96px; }
+      h2 { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay"></div>
+  <aside id="sidebar"></aside>
+  <div id="app">
+    <header>
+      <button id="menu" aria-label="Open topics">☰</button>
+      <div class="mark" id="header-mark">F</div>
+      <div class="hint" id="header-hint">Tap a card to hear it aloud</div>
+      <div style="flex:1"></div>
+      <button id="stop">Stop</button>
+    </header>
+    <main id="main"></main>
+  </div>
+  <script>
+    const synth = window.speechSynthesis;
+    const HEARD_KEY = "funlearn-heard";
+    let heard = {};
+    try { heard = JSON.parse(localStorage.getItem(HEARD_KEY) || "{}"); } catch (e) { heard = {}; }
+    let view = { kind: "home" };
+    let speakToken = 0;
+
+    const WORDS = {A:"Apple",B:"Ball",C:"Cat",D:"Dog",E:"Elephant",F:"Fish",G:"Grapes",H:"Hen",I:"Ice Cream",J:"Jug",K:"Kite",L:"Lion",M:"Monkey",N:"Nest",O:"Owl",P:"Parrot",Q:"Queen",R:"Rose",S:"Sun",T:"Tiger",U:"Umbrella",V:"Van",W:"Watch",X:"Xylophone",Y:"Yak",Z:"Zebra"};
+    const alphabets = Array.from({length:26}, (_,i) => {
+      const L = String.fromCharCode(65+i);
+      return { id:"a-"+L, glyph:L, label:L+" "+L.toLowerCase(), sub:WORDS[L], speak:L+" for "+WORDS[L] };
+    });
+    const swar = ["अ","आ","इ","ई","उ","ऊ","ऋ","ए","ऐ","ओ","औ","अं","अः"];
+    const vyanjan = ["क","ख","ग","घ","ङ","च","छ","ज","झ","ञ","ट","ठ","ड","ढ","ण","त","थ","द","ध","न","प","फ","ब","भ","म","य","र","ल","व","श","ष","स","ह"];
+    const varnmala = [
+      ...swar.map((ch,i)=>({id:"vs-"+i, glyph:ch, label:ch, speak:ch, lang:"hi-IN", group:"Swar"})),
+      ...vyanjan.map((ch,i)=>({id:"vy-"+i, glyph:ch, label:ch, speak:ch, lang:"hi-IN", group:"Vyanjan"})),
+    ];
+    const numbers = Array.from({length:100}, (_,i)=>({id:"n-"+(i+1), glyph:String(i+1), label:String(i+1), speak:String(i+1)}));
+    const animals = [
+      {id:"dog", glyph:"🐶", label:"Dog", sub:"Woof woof", speak:"Dog. Woof woof!"},
+      {id:"cat", glyph:"🐱", label:"Cat", sub:"Meow meow", speak:"Cat. Meow meow!"},
+      {id:"cow", glyph:"🐮", label:"Cow", sub:"Moo moo", speak:"Cow. Moo moo!"},
+      {id:"lion", glyph:"🦁", label:"Lion", sub:"Roar", speak:"Lion. Roar!"},
+      {id:"ele", glyph:"🐘", label:"Elephant", sub:"Pawoo", speak:"Elephant. Pawoo!"},
+      {id:"sheep", glyph:"🐑", label:"Sheep", sub:"Baa baa", speak:"Sheep. Baa baa!"},
+      {id:"monk", glyph:"🐵", label:"Monkey", sub:"Whoop whoop", speak:"Monkey. Whoop whoop!"},
+      {id:"frog", glyph:"🐸", label:"Frog", sub:"Ribbit", speak:"Frog. Ribbit ribbit!"},
+    ];
+    const birds = [
+      {id:"duck", glyph:"🦆", label:"Duck", sub:"Quack quack", speak:"Duck. Quack quack!"},
+      {id:"roo", glyph:"🐓", label:"Rooster", sub:"Cock-a-doodle-doo", speak:"Rooster. Cock-a-doodle-doo!"},
+      {id:"owl", glyph:"🦉", label:"Owl", sub:"Hoot hoot", speak:"Owl. Hoot hoot!"},
+      {id:"crow", glyph:"🐦", label:"Crow", sub:"Caw caw", speak:"Crow. Caw caw!"},
+      {id:"pig", glyph:"🕊️", label:"Pigeon", sub:"Coo coo", speak:"Pigeon. Coo coo!"},
+      {id:"par", glyph:"🦜", label:"Parrot", sub:"Squawk", speak:"Parrot. Squawk!"},
+    ];
+    const sounds = [
+      {id:"bell", glyph:"🔔", label:"Bell", sub:"Ding dong", speak:"Bell. Ding dong!"},
+      {id:"clk", glyph:"⏰", label:"Clock", sub:"Tick tock", speak:"Clock. Tick tock!"},
+      {id:"car", glyph:"🚗", label:"Car horn", sub:"Beep beep", speak:"Car horn. Beep beep!"},
+      {id:"trn", glyph:"🚂", label:"Train", sub:"Choo choo", speak:"Train. Choo choo!"},
+      {id:"ph", glyph:"📞", label:"Phone", sub:"Ring ring", speak:"Phone. Ring ring!"},
+      {id:"drm", glyph:"🥁", label:"Drum", sub:"Dum dum tish", speak:"Drum. Dum dum tish!"},
+    ];
+    const rhymes = [
+      {id:"tw", label:"Twinkle Twinkle Little Star", body:"Twinkle, twinkle, little star,\nHow I wonder what you are!\nUp above the world so high,\nLike a diamond in the sky.", speak:"Twinkle, twinkle, little star, how I wonder what you are. Up above the world so high, like a diamond in the sky."},
+      {id:"jj", label:"Johny Johny Yes Papa", body:"Johny, Johny,\nYes, Papa?\nEating sugar?\nNo, Papa.\nTelling lies?\nNo, Papa.\nOpen your mouth,\nHa! Ha! Ha!", speak:"Johny, Johny, yes papa? Eating sugar? No papa. Telling lies? No papa. Open your mouth. Ha ha ha!"},
+      {id:"baa", label:"Baa Baa Black Sheep", body:"Baa, baa, black sheep,\nHave you any wool?\nYes, sir, yes, sir,\nThree bags full.", speak:"Baa, baa, black sheep, have you any wool? Yes sir, yes sir, three bags full."},
+      {id:"hum", label:"Humpty Dumpty", body:"Humpty Dumpty sat on a wall,\nHumpty Dumpty had a great fall.\nAll the king's horses and all the king's men\nCouldn't put Humpty together again.", speak:"Humpty Dumpty sat on a wall. Humpty Dumpty had a great fall."},
+      {id:"jack", label:"Jack and Jill", body:"Jack and Jill went up the hill\nTo fetch a pail of water.\nJack fell down and broke his crown,\nAnd Jill came tumbling after.", speak:"Jack and Jill went up the hill to fetch a pail of water."},
+    ];
+    const sentences = [
+      "The sun shines in the sky.","I love to eat fresh apples.","Dogs are loyal and playful animals.",
+      "Trees give us clean air and shade.","I go to school every morning.","Reading books makes us smart.",
+      "Water is essential for life.","Please and thank you are kind words.","I brush my teeth every night.",
+      "The moon comes out after sunset."
+    ].map((t,i)=>({id:"s-"+i, label:t, speak:t}));
+    const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map((n,i)=>({id:"d-"+i, glyph:String(i+1), label:n, sub:"Day "+(i+1), speak:n}));
+    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"].map((n,i)=>({id:"m-"+i, glyph:String(i+1), label:n, speak:n}));
+    const gaan = `जन गण मन अधिनायक जय हे
+भारत भाग्य विधाता।
+पंजाब सिंध गुजरात मराठा
+द्रविड़ उत्कल बंग।
+विंध्य हिमाचल यमुना गंगा
+उच्छल जलधि तरंग।
+तव शुभ नामे जागे
+तव शुभ आशिष मागे
+गाहे तव जय गाथा।
+जन गण मंगलदायक जय हे
+भारत भाग्य विधाता।
+जय हे, जय हे, जय हे,
+जय जय जय, जय हे!`;
+    const geet = `वन्दे मातरम्।
+सुजलां सुफलां मलयजशीतलाम्
+शस्यश्यामलां मातरम्।
+वन्दे मातरम्।
+शुभ्रज्योत्स्ना पुलकितयामिनीम्
+फुल्लकुसुमित द्रुमदलशोभिनीम्
+सुहासिनीं सुमधुर भाषिणीम्
+सुखदां वरदां मातरम्।
+वन्दे मातरम्।`;
+    const national = [
+      {id:"gaan", label:"Rashtra Gaan", sub:"Jana Gana Mana", body:gaan, speak:gaan.replace(/\n/g," "), lang:"hi-IN"},
+      {id:"geet", label:"Rashtra Geet", sub:"Vande Mataram", body:geet, speak:geet.replace(/\n/g," "), lang:"hi-IN"},
+    ];
+    const freedom = [
+      {id:"g", label:"Mahatma Gandhi", sub:"Father of the Nation", speak:"Mahatma Gandhi. Father of the Nation."},
+      {id:"b", label:"Netaji Subhas Chandra Bose", sub:"Give me blood, and I will give you freedom", speak:"Netaji Subhas Chandra Bose. Give me blood, and I will give you freedom."},
+      {id:"s", label:"Bhagat Singh", sub:"Shaheed-e-Azam", speak:"Bhagat Singh. Shaheed-e-Azam."},
+      {id:"r", label:"Rani Lakshmibai", sub:"Warrior Queen of Jhansi", speak:"Rani Lakshmibai. Warrior Queen of Jhansi."},
+      {id:"p", label:"Sardar Vallabhbhai Patel", sub:"Iron Man of India", speak:"Sardar Vallabhbhai Patel. Iron Man of India."},
+      {id:"n", label:"Jawaharlal Nehru", sub:"Chacha Nehru", speak:"Pandit Jawaharlal Nehru. Chacha Nehru. India's first Prime Minister."},
+    ];
+
+    const SECTIONS = [
+      {id:"alphabets", nav:"Alphabets", title:"English alphabets", sub:"A to Z, with a word for each letter", items:alphabets, layout:"grid", quiz:true},
+      {id:"varnmala", nav:"Varnmala", title:"हिंदी वर्णमाला", sub:"Swar and vyanjan, spoken in Hindi", items:varnmala, layout:"grid", quiz:true, tight:true},
+      {id:"numbers", nav:"Numbers", title:"Numbers 1 to 100", sub:"Tap a number to hear it", items:numbers, layout:"grid", quiz:true, tight:true},
+      {id:"animals", nav:"Animals", title:"Animals & sounds", sub:"Meet the animals and hear them speak", items:animals, layout:"grid", quiz:true},
+      {id:"birds", nav:"Birds", title:"Birds & sounds", sub:"Feathered friends and their calls", items:birds, layout:"grid", quiz:true},
+      {id:"sounds", nav:"Sounds", title:"Everyday sounds", sub:"Things you hear around you", items:sounds, layout:"grid", quiz:true},
+      {id:"rhymes", nav:"Rhymes", title:"Nursery rhymes", sub:"Read along while it is spoken aloud", items:rhymes, layout:"list"},
+      {id:"sentences", nav:"Sentences", title:"English sentences", sub:"Short lines to speak with confidence", items:sentences, layout:"list"},
+      {id:"days", nav:"Days", title:"Days of the week", sub:"Monday through Sunday", items:days, layout:"grid", quiz:true},
+      {id:"months", nav:"Months", title:"Months of the year", sub:"January through December", items:months, layout:"grid", quiz:true},
+      {id:"national", nav:"National", title:"National anthem & song", sub:"Rashtra Gaan and Rashtra Geet", items:national, layout:"list"},
+      {id:"freedom", nav:"Freedom", title:"Freedom fighters", sub:"People who helped India become free", items:freedom, layout:"grid"},
+    ];
+    const MAP = Object.fromEntries(SECTIONS.map(s => [s.id, s]));
+
+    function mark(id) {
+      heard[id] = true;
+      localStorage.setItem(HEARD_KEY, JSON.stringify(heard));
+    }
+    function speak(text, lang) {
+      const token = ++speakToken;
+      if (!synth) return Promise.resolve();
+      synth.cancel();
+      document.getElementById("stop").style.display = "inline-flex";
+      return new Promise((resolve) => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = lang || "en-US";
+        u.rate = lang === "hi-IN" ? 0.8 : 0.88;
+        u.onend = u.onerror = () => {
+          if (speakToken === token) document.getElementById("stop").style.display = "none";
+          resolve();
+        };
+        synth.speak(u);
+      });
+    }
+    function stop() {
+      speakToken += 1;
+      if (synth) synth.cancel();
+      document.getElementById("stop").style.display = "none";
+    }
+    document.getElementById("stop").onclick = stop;
+    document.getElementById("menu").onclick = () => {
+      document.getElementById("sidebar").classList.add("open");
+      document.getElementById("overlay").classList.add("open");
+    };
+    document.getElementById("overlay").onclick = closeNav;
+    function closeNav() {
+      document.getElementById("sidebar").classList.remove("open");
+      document.getElementById("overlay").classList.remove("open");
+    }
+
+    function count(section) {
+      return section.items.filter(i => heard[i.id]).length;
+    }
+
+    function renderNav() {
+      const active = view.kind === "home" ? "home" : view.id;
+      document.getElementById("sidebar").innerHTML =
+        `<div class="brand"><div class="mark">F</div><div><h1>FunLearn</h1><p>Kids learning</p></div></div>` +
+        `<button class="nav-btn ${active==="home"?"active":""}" data-go="home">Home</button>` +
+        SECTIONS.map(s => `<button class="nav-btn ${active===s.id?"active":""}" data-go="${s.id}">${s.nav} <span style="float:right;opacity:.7;font-size:11px">${count(s)}/${s.items.length}</span></button>`).join("");
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.onclick = () => {
+          closeNav();
+          stop();
+          const id = btn.getAttribute("data-go");
+          view = id === "home" ? {kind:"home"} : {kind:"section", id};
+          render();
+        };
+      });
+    }
+
+    function cardHtml(item, extraClass) {
+      const hi = item.lang === "hi-IN" ? " hi" : "";
+      return `<button class="card ${heard[item.id]?"heard":""} ${extraClass||""}" data-id="${item.id}">
+        <span class="check">✓</span>
+        ${item.glyph ? `<div class="glyph${hi}">${item.glyph}</div>` : ""}
+        ${item.label && item.label !== item.glyph ? `<div class="label">${item.label}</div>` : ""}
+        ${item.sub ? `<div class="sub-label">${item.sub}</div>` : ""}
+      </button>`;
+    }
+
+    function playItem(item) {
+      mark(item.id);
+      renderNav();
+      return speak(item.speak, item.lang);
+    }
+
+    async function playAll(items) {
+      const token = ++speakToken; speakToken -= 1;
+      const mine = speakToken + 1;
+      for (const item of items) {
+        if (speakToken + 1 !== mine && speakToken !== mine) {
+          /* continue with dedicated token */
+        }
+      }
+      const run = ++speakToken;
+      for (const item of items) {
+        if (speakToken !== run) return;
+        mark(item.id);
+        await speak(item.speak, item.lang);
+      }
+      render();
+    }
+
+    function openReader(section, item) {
+      view = {kind:"reader", id:section.id, item};
+      render();
+      playItem(item);
+    }
+
+    function renderHome() {
+      return `<p class="kicker">Welcome</p><h2>Hello, little learner</h2>
+        <p class="sub">Pick a topic. Tap a card. Listen, then try the quiz. Your stars stay on this device.</p>
+        <div class="home-grid">${SECTIONS.map(s =>
+          `<button class="home-card" data-go="${s.id}"><b>${s.nav}</b><span class="sub-label">${count(s)} of ${s.items.length} heard</span></button>`
+        ).join("")}</div>`;
+    }
+
+    function renderSection(section) {
+      const groups = new Map();
+      section.items.forEach(i => {
+        const g = i.group || "";
+        if (!groups.has(g)) groups.set(g, []);
+        groups.get(g).push(i);
+      });
+      let html = `<button class="action ghost" data-back>Home</button>
+        <h2 style="margin-top:10px">${section.title}</h2><p class="sub">${section.sub}</p>
+        <div class="row">
+          <button class="action ghost" data-all>Play all</button>
+          ${section.quiz ? `<button class="action teal" data-quiz>Quiz</button>` : ""}
+        </div>`;
+      for (const [group, items] of groups) {
+        if (group) html += `<h3 class="group">${group}</h3>`;
+        if (section.layout === "list") {
+          html += `<div class="list">${items.map(i =>
+            `<button class="wide ${heard[i.id]?"heard":""}" data-id="${i.id}"><span>${i.label}${i.sub?`<div class="sub-label">${i.sub}</div>`:""}</span><span class="play">▶</span></button>`
+          ).join("")}</div>`;
+        } else {
+          html += `<div class="grid ${section.tight?"tight":""}">${items.map(i => cardHtml(i)).join("")}</div>`;
+        }
+      }
+      return html;
+    }
+
+    function renderReader(section, item) {
+      const hi = item.lang === "hi-IN" ? " hi-text" : "";
+      return `<button class="action ghost" data-backsec>Back to ${section.nav}</button>
+        <article class="display" style="margin-top:16px">
+          <h2>${item.label}</h2>
+          ${item.sub ? `<p class="sub">${item.sub}</p>` : ""}
+          <p class="${hi}">${item.body}</p>
+          <div class="row">
+            <button class="action" data-play>Play audio</button>
+            <button class="action ghost" data-stop>Stop</button>
+          </div>
+        </article>`;
+    }
+
+    function shuffle(list) {
+      const a = list.slice();
+      for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+      return a;
+    }
+
+    function startQuiz(section) {
+      const pool = section.id === "numbers" ? section.items.slice(0,20) : section.items.filter(i => !i.body);
+      const qs = shuffle(pool).slice(0, Math.min(5, pool.length)).map(correct => ({
+        correct, choices: shuffle([correct, ...shuffle(pool.filter(i=>i.id!==correct.id)).slice(0,3)])
+      }));
+      view = {kind:"quiz", id:section.id, qs, index:0, score:0};
+      render();
+      speak(qs[0].correct.speak, qs[0].correct.lang);
+    }
+
+    function renderQuiz(section) {
+      const { qs, index, score } = view;
+      if (view.done) {
+        return `<p class="kicker">Quiz complete</p><h2>${score} of ${qs.length} correct</h2>
+          <p class="sub">${score===qs.length?"Perfect listening.":"Play again whenever you like."}</p>
+          <button class="action ghost" data-backsec>Back to lesson</button>`;
+      }
+      const q = qs[index];
+      return `<button class="action ghost" data-backsec>Exit quiz</button>
+        <p class="kicker" style="margin-top:12px">Question ${index+1} of ${qs.length}</p>
+        <h2>Which one did you hear?</h2>
+        <div class="row"><button class="action ghost" data-again>Hear again</button></div>
+        <div class="grid">${q.choices.map(i => cardHtml(i, "choice")).join("")}</div>`;
+    }
+
+    function render() {
+      renderNav();
+      const main = document.getElementById("main");
+      if (view.kind === "home") {
+        main.innerHTML = renderHome();
+        main.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { view = {kind:"section", id:b.getAttribute("data-go")}; render(); });
+        return;
+      }
+      const section = MAP[view.id];
+      if (view.kind === "section") {
+        main.innerHTML = renderSection(section);
+        main.querySelector("[data-back]").onclick = () => { stop(); view = {kind:"home"}; render(); };
+        main.querySelector("[data-all]").onclick = () => playAll(section.items);
+        const q = main.querySelector("[data-quiz]");
+        if (q) q.onclick = () => startQuiz(section);
+        main.querySelectorAll("[data-id]").forEach(btn => {
+          const item = section.items.find(i => i.id === btn.getAttribute("data-id"));
+          btn.onclick = () => item.body ? openReader(section, item) : playItem(item).then(render);
+        });
+        return;
+      }
+      if (view.kind === "reader") {
+        main.innerHTML = renderReader(section, view.item);
+        main.querySelector("[data-backsec]").onclick = () => { stop(); view = {kind:"section", id:section.id}; render(); };
+        main.querySelector("[data-play]").onclick = () => playItem(view.item);
+        main.querySelector("[data-stop]").onclick = stop;
+        return;
+      }
+      if (view.kind === "quiz") {
+        main.innerHTML = renderQuiz(section);
+        const back = main.querySelector("[data-backsec]");
+        if (back) back.onclick = () => { stop(); view = {kind:"section", id:section.id}; render(); };
+        const again = main.querySelector("[data-again]");
+        if (again) again.onclick = () => speak(view.qs[view.index].correct.speak, view.qs[view.index].correct.lang);
+        main.querySelectorAll(".choice").forEach(btn => {
+          btn.onclick = () => {
+            const item = view.qs[view.index].choices.find(i => i.id === btn.getAttribute("data-id"));
+            if (item.id === view.qs[view.index].correct.id) {
+              view.score += 1; mark(item.id);
+              if (view.index + 1 >= view.qs.length) { view.done = true; stop(); render(); }
+              else { view.index += 1; render(); speak(view.qs[view.index].correct.speak, view.qs[view.index].correct.lang); }
+            } else speak("Try again");
+          };
+        });
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
